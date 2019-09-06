@@ -1,7 +1,4 @@
-import sys
-#sys.path.insert(0, '..')
 import molecule_vae
-import numpy as np
 
 # 1. load grammar VAE
 grammar_weights = "pretrained/zinc_vae_grammar_L56_E100_val.hdf5"
@@ -24,10 +21,8 @@ z1 = grammar_model.encode(smiles)
 # NOTE: decoding is stochastic so calling this function many
 # times for the same latent point will return different answers
 
-for mol,real in zip(grammar_model.decode(z1),smiles):
-    print mol + '  ' + real
-
-
+for mol, real in zip(grammar_model.decode(z1),smiles):
+    print(mol + '  ' + real)
 
 # 3. the character VAE (https://github.com/maxhodak/keras-molecules)
 # works the same way, let's load it
@@ -37,7 +32,7 @@ char_model = molecule_vae.ZincCharacterModel(char_weights)
 # 4. encode and decode
 z2 = char_model.encode(smiles)
 for mol in char_model.decode(z2):
-    print mol
+    print(mol)
 
 
 

@@ -8,7 +8,7 @@ import models.model_zinc_str
 
 def get_zinc_tokenizer(cfg):
     long_tokens = filter(lambda a: len(a) > 1, cfg._lexical_index.keys())
-    replacements = ['$','%','^'] # ,'&']
+    replacements = ['$', '%', '^']  # ,'&']
     assert len(long_tokens) == len(replacements)
     for token in replacements: 
         assert not cfg._lexical_index.has_key(token)
@@ -27,9 +27,13 @@ def get_zinc_tokenizer(cfg):
     
     return tokenize
 
+
 def pop_or_nothing(S):
-    try: return S.pop()
-    except: return 'Nothing'
+    try:
+        return S.pop()
+    except:
+        return 'Nothing'
+
 
 def prods_to_eq(prods):
     seq = [prods[0].lhs()]
@@ -44,7 +48,6 @@ def prods_to_eq(prods):
         return ''.join(seq)
     except:
         return ''
-
 
 
 class ZincGrammarModel(object):
@@ -67,7 +70,6 @@ class ZincGrammarModel(object):
         self.vae = self._model.MoleculeVAE()
         self.vae.load(self._productions, weights_file, max_length=self.MAX_LEN, latent_rep_size=latent_rep_size)
 
-
     def encode(self, smiles):
         """ Encode a list of smiles strings into the latent space """
         assert type(smiles) == list
@@ -76,10 +78,10 @@ class ZincGrammarModel(object):
         productions_seq = [tree.productions() for tree in parse_trees]
         indices = [np.array([self._prod_map[prod] for prod in entry], dtype=int) for entry in productions_seq]
         one_hot = np.zeros((len(indices), self.MAX_LEN, self._n_chars), dtype=np.float32)
-        for i in xrange(len(indices)):
+        for i in range(len(indices)):
             num_productions = len(indices[i])
-            one_hot[i][np.arange(num_productions),indices[i]] = 1.
-            one_hot[i][np.arange(num_productions, self.MAX_LEN),-1] = 1.
+            one_hot[i][np.arange(num_productions), indices[i]] = 1.
+            one_hot[i][np.arange(num_productions, self.MAX_LEN), -1] = 1.
         self.one_hot = one_hot
         return self.vae.encoderMV.predict(one_hot)[0]
 
@@ -91,23 +93,23 @@ class ZincGrammarModel(object):
 
         # Create a stack for each input in the batch
         S = np.empty((unmasked.shape[0],), dtype=object)
-        for ix in xrange(S.shape[0]):
+        for ix in range(S.shape[0]):
             S[ix] = [str(self._grammar.start_index)]
 
         # Loop over time axis, sampling values and updating masks
-        for t in xrange(unmasked.shape[1]):
+        for t in range(unmasked.shape[1]):
             next_nonterminal = [self._lhs_map[pop_or_nothing(a)] for a in S]
             mask = self._grammar.masks[next_nonterminal]
-            masked_output = np.exp(unmasked[:,t,:])*mask + eps
+            masked_output = np.exp(unmasked[:, t, :])*mask + eps
             sampled_output = np.argmax(np.random.gumbel(size=masked_output.shape) + np.log(masked_output), axis=-1)
-            X_hat[np.arange(unmasked.shape[0]),t,sampled_output] = 1.0
+            X_hat[np.arange(unmasked.shape[0]), t, sampled_output] = 1.0
 
             # Identify non-terminals in RHS of selected production, and
             # push them onto the stack in reverse order
             rhs = [filter(lambda a: (type(a) == nltk.grammar.Nonterminal) and (str(a) != 'None'),
                           self._productions[i].rhs()) 
                    for i in sampled_output]
-            for ix in xrange(S.shape[0]):
+            for ix in range(S.shape[0]):
                 S[ix].extend(map(str, rhs[ix])[::-1])
         return X_hat # , ln_p
 
@@ -117,15 +119,13 @@ class ZincGrammarModel(object):
         unmasked = self.vae.decoder.predict(z)
         X_hat = self._sample_using_masks(unmasked)
         # Convert from one-hot to sequence of production rules
-        prod_seq = [[self._productions[X_hat[index,t].argmax()] 
-                     for t in xrange(X_hat.shape[1])] 
-                    for index in xrange(X_hat.shape[0])]
+        prod_seq = [[self._productions[X_hat[index, t].argmax()]
+                     for t in range(X_hat.shape[1])]
+                    for index in range(X_hat.shape[0])]
         return [prods_to_eq(prods) for prods in prod_seq]
 
 
-
 class ZincCharacterModel(object):
-
     def __init__(self, weights_file, latent_rep_size=56):
         self._model = models.model_zinc_str
         self.MAX_LEN = 120
@@ -136,16 +136,16 @@ class ZincCharacterModel(object):
         self._char_index = {}
         for ix, char in enumerate(self.charlist):
             self._char_index[char] = ix
-        self.vae.load(self.charlist, weights_file, max_length=self.MAX_LEN, latent_rep_size=latent_rep_size)
+        self.vae.load(self.charlist, weights_file, latent_rep_size=latent_rep_size)
 
     def encode(self, smiles):
         """ Encode a list of smiles strings into the latent space """
         indices = [np.array([self._char_index[c] for c in entry], dtype=int) for entry in smiles]
         one_hot = np.zeros((len(indices), self.MAX_LEN, len(self.charlist)), dtype=np.float32)
-        for i in xrange(len(indices)):
+        for i in range(len(indices)):
             num_productions = len(indices[i])
             one_hot[i][np.arange(num_productions),indices[i]] = 1.
-            one_hot[i][np.arange(num_productions, self.MAX_LEN),-1] = 1.
+            one_hot[i][np.arange(num_productions, self.MAX_LEN), -1] = 1.
         return self.vae.encoderMV.predict(one_hot)[0]
 
     def decode(self, z):
