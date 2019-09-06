@@ -33,8 +33,8 @@ def to_one_hot(smiles):
     one_hot = np.zeros((len(indices), MAX_LEN, NCHARS), dtype=np.float32)
     for i in range(len(indices)):
         num_productions = len(indices[i])
-        one_hot[i][np.arange(num_productions),indices[i]] = 1.
-        one_hot[i][np.arange(num_productions, MAX_LEN),-1] = 1.
+        one_hot[i][np.arange(num_productions), indices[i]] = 1.
+        one_hot[i][np.arange(num_productions, MAX_LEN), -1] = 1.
     return one_hot
 
 

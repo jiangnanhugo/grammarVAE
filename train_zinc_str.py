@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import argparse
 import os
 import numpy as np
@@ -45,12 +43,12 @@ def train_zinc_str(args):
     data = h5f['data'][:]
     # 4.1. split into train/test, we use test set to check reconstruction error and the % of
     # samples from prior p(z) that are valid
-    XTE = data[0:5000]
-    XTR = data[5000:]
+    train_data = data[0:5000]
+    # test_data = data[5000:]
     h5f.close()
 
     # 5. fit the vae
-    model.autoencoder.fit(XTE, XTE, shuffle=True,
+    model.autoencoder.fit(train_data, train_data, shuffle=True,
                           nb_epoch=args.epochs, batch_size=BATCH,
                           callbacks=[checkpointer, reduce_lr],
                           validation_split=0.1)
@@ -63,5 +61,5 @@ if __name__ == '__main__':
     parser.add_argument('--load_model', type=str, metavar='N', default="")
     parser.add_argument('--epochs', type=int, metavar='N', default=EPOCHS, help='Number of epochs for train.')
     parser.add_argument('--latent_dim', type=int, metavar='N', default=LATENT, help='Dim of latent represent.')
-    args = parser.parse_args()
-    train_zinc_str(args)
+    arg = parser.parse_args()
+    train_zinc_str(arg)

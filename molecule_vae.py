@@ -2,8 +2,7 @@ import nltk
 import numpy as np
 
 import zinc_grammar
-import models.model_zinc
-import models.model_zinc_str
+from modules import model_zinc, model_zinc_str
 
 
 def get_zinc_tokenizer(cfg):
@@ -46,16 +45,15 @@ def prods_to_eq(prods):
                 break
     try:
         return ''.join(seq)
-    except:
+    except Exception:
         return ''
 
 
-class ZincGrammarModel(object):
-
+class GrammarModel(object):
     def __init__(self, weights_file, latent_rep_size=56):
         """ Load the (trained) zinc encoder/decoder, grammar model. """
         self._grammar = zinc_grammar
-        self._model = models.model_zinc
+        self._model = model_zinc
         self.MAX_LEN = self._model.MAX_LEN
         self._productions = self._grammar.GCFG.productions()
         self._prod_map = {}
@@ -125,9 +123,9 @@ class ZincGrammarModel(object):
         return [prods_to_eq(prods) for prods in prod_seq]
 
 
-class ZincCharacterModel(object):
+class CharModel(object):
     def __init__(self, weights_file, latent_rep_size=56):
-        self._model = models.model_zinc_str
+        self._model = model_zinc_str
         self.MAX_LEN = 120
         self.vae = self._model.MoleculeVAE()
         self.charlist = ['C', '(', ')', 'c', '1', '2', 'o', '=', 'O', 'N', '3', 'F', '[',
@@ -144,7 +142,7 @@ class ZincCharacterModel(object):
         one_hot = np.zeros((len(indices), self.MAX_LEN, len(self.charlist)), dtype=np.float32)
         for i in range(len(indices)):
             num_productions = len(indices[i])
-            one_hot[i][np.arange(num_productions),indices[i]] = 1.
+            one_hot[i][np.arange(num_productions), indices[i]] = 1.
             one_hot[i][np.arange(num_productions, self.MAX_LEN), -1] = 1.
         return self.vae.encoderMV.predict(one_hot)[0]
 

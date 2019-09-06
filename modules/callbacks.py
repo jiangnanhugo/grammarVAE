@@ -1,6 +1,8 @@
 import numpy as np
 import warnings
-import keras as K
+import keras.backend as K
+
+
 class Callback(object):
     """Abstract base class used to build new callbacks.
     # Properties
@@ -27,6 +29,7 @@ class Callback(object):
     def __init__(self):
         self.validation_data = None
         self.model = None
+        self.params = None
 
     def set_params(self, params):
         self.params = params
@@ -168,6 +171,7 @@ class Callback(object):
                 but that may change in the future.
         """
 
+
 class ModelCheckpoint(Callback):
     """Save the model after every epoch.
     `filepath` can contain named formatting options,
@@ -211,7 +215,7 @@ class ModelCheckpoint(Callback):
 
         if mode not in ['auto', 'min', 'max']:
             warnings.warn('ModelCheckpoint mode %s is unknown, '
-                          'fallback to auto mode.' % (mode),
+                          'fallback to auto mode.' % mode,
                           RuntimeWarning)
             mode = 'auto'
 
@@ -239,7 +243,7 @@ class ModelCheckpoint(Callback):
                 current = logs.get(self.monitor)
                 if current is None:
                     warnings.warn('Can save best model only with %s available, '
-                                  'skipping.' % (self.monitor), RuntimeWarning)
+                                  'skipping.' % self.monitor, RuntimeWarning)
                 else:
                     if self.monitor_op(current, self.best):
                         if self.verbose > 0:
@@ -263,6 +267,7 @@ class ModelCheckpoint(Callback):
                     self.model.save_weights(filepath, overwrite=True)
                 else:
                     self.model.save(filepath, overwrite=True)
+
 
 class ReduceLROnPlateau(Callback):
     """Reduce learning rate when a metric has stopped improving.
@@ -328,7 +333,7 @@ class ReduceLROnPlateau(Callback):
         """
         if self.mode not in ['auto', 'min', 'max']:
             warnings.warn('Learning Rate Plateau Reducing mode %s is unknown, '
-                          'fallback to auto mode.' % (self.mode),
+                          'fallback to auto mode.' % self.mode,
                           RuntimeWarning)
             self.mode = 'auto'
         if (self.mode == 'min' or
